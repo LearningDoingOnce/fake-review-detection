@@ -1,0 +1,9 @@
+{
+  "text_col": "text",
+  "threshold": 0.5,
+  "n_features": 8002,
+  "classes": [
+    "Fake",
+    "Real"
+  ]
+}
