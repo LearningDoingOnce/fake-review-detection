@@ -142,32 +142,22 @@ def predict_review(text, rating, helpful, model, preprocessing, label_encoder, c
 # FAKE REVIEW INDICATORS (HEURISTIC)
 # ============================================
 def fake_review_indicators(text, rating, helpful, fake_prob):
-    indicators = []
     word_count = len(text.split())
-
-    indicators.append(("Teks sangat pendek", word_count < 5, f"{word_count} kata"))
-    indicators.append(("Rating tinggi + teks minim", rating >= 4.5 and word_count < 10, f"Rating {rating}"))
-    indicators.append(("Tidak ada helpful vote", helpful == 0, "Helpful = 0"))
-
-    generic_words = ["bagus", "oke", "mantap", "recommended", "baik"]
-    indicators.append((
-        "Mengandung kata generik",
-        any(w in text.lower() for w in generic_words),
-        ", ".join(generic_words)
-    ))
-
-    indicators.append(("Fake probability tinggi", fake_prob >= 0.6, f"{fake_prob*100:.1f}%"))
-
-    return indicators
+    return [
+        ("Teks sangat pendek", word_count < 5, f"{word_count} kata"),
+        ("Rating tinggi + teks minim", rating >= 4.5 and word_count < 10, f"Rating {rating}"),
+        ("Tidak ada helpful vote", helpful == 0, "Helpful = 0"),
+        ("Bahasa generik/promosi",
+         any(w in text.lower() for w in ["bagus", "mantap", "recommended", "best", "wajib beli"]),
+         "kata generik"),
+        ("Fake probability tinggi", fake_prob >= 0.6, f"{fake_prob*100:.1f}%")
+    ]
 
 # ============================================
 # MAIN APP
 # ============================================
 def main():
-    st.markdown(
-        '<div class="main-header">🔍 Fake Review Detection System</div>',
-        unsafe_allow_html=True
-    )
+    st.markdown('<div class="main-header">🔍 Fake Review Detection System</div>', unsafe_allow_html=True)
 
     model, preprocessing, label_encoder, config = load_model_and_preprocessing()
 
@@ -175,90 +165,64 @@ def main():
         ["🔍 Prediksi", "📜 Histori", "🧠 Indikator Fake", "ℹ️ Tentang"]
     )
 
-    # ==============================
-    # TAB PREDIKSI
-    # ==============================
+    # ---------- TAB PREDIKSI ----------
     with tab_pred:
         st.markdown('<div class="card">', unsafe_allow_html=True)
 
         text_input = st.text_area(
             "Review Text",
             height=150,
-            placeholder="Contoh: Barang cepat sampai, packing rapi, recommended!"
+            placeholder="Contoh: Barang cepat sampai, packing rapi, tapi kualitas kurang sesuai deskripsi..."
         )
 
         col1, col2 = st.columns(2)
         rating_input = col1.slider("Rating", 1.0, 5.0, 5.0, 0.5)
         helpful_input = col2.number_input("Helpful Votes", 0, 1000, 0)
 
-        if st.button("🔍 Analyze Review", type="primary", use_container_width=True):
-            if not text_input.strip():
-                st.warning("Masukkan teks review terlebih dahulu.")
-            else:
-                result = predict_review(
-                    text_input,
-                    rating_input,
-                    helpful_input,
-                    model,
-                    preprocessing,
-                    label_encoder,
-                    config
-                )
+        if st.button("🔍 Analyze Review", use_container_width=True):
+            result = predict_review(
+                text_input, rating_input, helpful_input,
+                model, preprocessing, label_encoder, config
+            )
 
-                st.session_state.history.insert(
-                    0,
-                    {
-                        "time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                        "label": result["label"],
-                        "confidence": round(result["confidence"], 4),
-                        "fake_probability": round(result["probability"], 4),
-                        "latency_ms": round(result["total_time_ms"], 2),
-                        "text": text_input[:200] + ("..." if len(text_input) > 200 else "")
-                    }
-                )
+            st.session_state["last_result"] = {
+                "text": text_input,
+                "rating": rating_input,
+                "helpful": helpful_input,
+                "fake_prob": result["probability"]
+            }
 
-                st.session_state["last_result"] = {
-                    "text": text_input,
-                    "rating": rating_input,
-                    "helpful": helpful_input,
-                    "fake_prob": result["probability"]
-                }
+            st.session_state.history.insert(0, {
+                "time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "label": result["label"],
+                "confidence": round(result["confidence"], 4),
+                "fake_probability": round(result["probability"], 4),
+                "latency_ms": round(result["total_time_ms"], 2),
+                "text": text_input[:200]
+            })
 
-                st.divider()
+            box = "result-fake" if result["label"] == "Fake" else "result-real"
+            st.markdown(
+                f'<div class="{box}">{result["label"].upper()} REVIEW<br>'
+                f'Confidence: {result["confidence"]*100:.1f}%</div>',
+                unsafe_allow_html=True
+            )
 
-                box = "result-fake" if result["label"] == "Fake" else "result-real"
-                icon = "⚠️" if result["label"] == "Fake" else "✅"
-
-                st.markdown(
-                    f'<div class="{box}">{icon} {result["label"].upper()} REVIEW<br>'
-                    f'Confidence: {result["confidence"]*100:.1f}%</div>',
-                    unsafe_allow_html=True
-                )
-
-                c1, c2, c3 = st.columns(3)
-                c1.metric("Prediction", result["label"])
-                c2.metric("Confidence", f"{result['confidence']*100:.1f}%")
-                c3.metric("⚡ Time", f"{result['total_time_ms']:.1f} ms")
-
-                with st.expander("⏱️ Performance Details"):
-                    st.write(f"- Preprocessing: {result['preprocess_time_ms']:.2f} ms")
-                    st.write(f"- Prediction: {result['predict_time_ms']:.2f} ms")
-                    st.write(f"- Total: {result['total_time_ms']:.2f} ms")
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Prediction", result["label"])
+            c2.metric("Confidence", f"{result['confidence']*100:.1f}%")
+            c3.metric("⚡ Time", f"{result['total_time_ms']:.1f} ms")
 
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # ==============================
-    # TAB HISTORI
-    # ==============================
+    # ---------- TAB HISTORI ----------
     with tab_history:
         if st.session_state.history:
             st.dataframe(pd.DataFrame(st.session_state.history), use_container_width=True)
         else:
             st.info("Belum ada histori prediksi.")
 
-    # ==============================
-    # TAB INDIKATOR
-    # ==============================
+    # ---------- TAB INDIKATOR ----------
     with tab_indicator:
         if "last_result" not in st.session_state:
             st.info("Lakukan prediksi terlebih dahulu.")
@@ -269,53 +233,45 @@ def main():
                 st.session_state["last_result"]["helpful"],
                 st.session_state["last_result"]["fake_prob"]
             ):
-                if status:
-                    st.warning(f"⚠️ {name} — {detail}")
-                else:
-                    st.success(f"✅ {name}")
+                st.warning(f"⚠️ {name} — {detail}") if status else st.success(f"✅ {name}")
 
-    # ==============================
-    # TAB TENTANG (DISESUAIKAN DENGAN teman.py)
-    # ==============================
+    # ---------- TAB TENTANG (ADAPTASI teman1.py) ----------
     with tab_about:
-        st.markdown('<div class="section">', unsafe_allow_html=True)
-        st.markdown("""
-        ### Tentang Aplikasi
+        st.markdown("### About Us")
 
-        Aplikasi ini digunakan untuk **klasifikasi review produk**
-        ke dalam dua kelas: **Real** dan **Fake**.
-        Pengguna dapat memasukkan teks review dalam **Bahasa Indonesia**
-        dan memperoleh prediksi beserta tingkat kepercayaannya.
-        """)
-        st.markdown("</div>", unsafe_allow_html=True)
+        with st.expander("Lihat detail", expanded=False):
+            st.markdown("""
+            Kami adalah **Justinus Natanael Bensohur (2602094004)** dan  
+            **Maxcell Rimba (2602110046)**, mahasiswa  
+            **Program Studi Data Science, School of Computer Science, Universitas Bina Nusantara**.
 
-        st.markdown('<div class="section">', unsafe_allow_html=True)
-        st.markdown("""
-        ### Model & Inferensi
+            Aplikasi ini merupakan bagian dari penelitian berjudul:  
+            **“Klasifikasi Fake Review dengan Deep Learning untuk Analisis Ulasan Produk di E-Commerce”.**
 
-        Berbeda dengan versi IndoBERT, aplikasi ini menggunakan
-        **Deep Neural Network (DNN)** dengan fitur **TF-IDF**
-        dan **fitur numerik (rating & helpful votes)**.
-        Seluruh proses inferensi dilakukan secara **real-time**
-        dan dioptimalkan untuk **CPU**.
-        """)
-        st.markdown("</div>", unsafe_allow_html=True)
+            ### Tujuan Penelitian
+            - Mengklasifikasikan ulasan produk menjadi **Real** dan **Fake**.
+            - Membantu konsumen mengenali ulasan mencurigakan.
+            - Memberikan insight kualitas ulasan pada platform e-commerce.
 
-        st.markdown('<div class="section">', unsafe_allow_html=True)
-        st.markdown("""
-        ### Tampilan & Penggunaan
+            ### Data & Pengambilan Data
+            - Sumber data: ulasan produk e-commerce (mis. Tokopedia).
+            - Metode: *web scraping* (Selenium & BeautifulSoup).
+            - Data dibersihkan dari duplikasi dan noise sebelum pelatihan model.
 
-        Aplikasi dibangun menggunakan **Streamlit** dengan pendekatan
-        tab-based interface untuk memisahkan:
-        - Prediksi
-        - Histori
-        - Indikator Fake
-        - Informasi Aplikasi
+            ### Model yang Digunakan
+            - Model **Deep Neural Network (DNN)**.
+            - Fitur utama:
+              - TF-IDF untuk teks review
+              - Rating & helpful votes sebagai fitur numerik
+            - Evaluasi menggunakan **accuracy, precision, recall, dan F1-score**.
 
-        Indikator fake review bersifat **heuristik**
-        dan **tidak memengaruhi hasil prediksi model**.
-        """)
-        st.markdown("</div>", unsafe_allow_html=True)
+            ### Tentang Aplikasi
+            - Dibangun menggunakan **Streamlit**.
+            - Menyediakan prediksi Real/Fake, confidence, dan latency inferensi.
+            - Indikator fake review bersifat **heuristik** dan tidak memengaruhi output model.
+
+            Terima kasih telah menggunakan aplikasi ini 🙏
+            """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
