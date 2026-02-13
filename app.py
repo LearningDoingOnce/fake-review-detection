@@ -28,15 +28,216 @@ st.set_page_config(
 # ============================================
 # LOAD CSS
 # ============================================
+
+# INLINE CSS (Fallback - always loads)
+st.markdown("""
+    <style>
+    /* Import Google Font */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
+    /* Global Styles */
+    * {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    
+    /* App Background */
+    .stApp {
+        background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+    }
+    
+    /* Main content area - ensure visibility */
+    .main .block-container {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+    
+    /* Hero Section */
+    .hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 3rem 2rem;
+        border-radius: 1rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+    
+    .hero-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: white;
+        text-align: center;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .hero-subtitle {
+        font-size: 1.1rem;
+        color: rgba(255, 255, 255, 0.95);
+        text-align: center;
+        max-width: 800px;
+        margin: 0 auto;
+        line-height: 1.6;
+    }
+    
+    /* Badges */
+    .badge {
+        display: inline-block;
+        padding: 0.5rem 1.2rem;
+        border-radius: 2rem;
+        font-weight: 600;
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .badge-real {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        color: white;
+    }
+    
+    .badge-fake {
+        background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+        color: white;
+    }
+    
+    /* Card Styling */
+    .card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e0e7ef;
+        min-height: 400px;
+    }
+    
+    .result-row {
+        font-size: 1.3rem;
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 0.5rem;
+        text-align: center;
+        color: #2d3748;
+    }
+    
+    /* Metrics */
+    [data-testid="stMetricValue"] {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2d3748;
+    }
+    
+    [data-testid="stMetricLabel"] {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #718096;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Progress Bar */
+    .stProgress > div > div {
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        border-radius: 1rem;
+    }
+    
+    /* Buttons */
+    .stButton > button {
+        border-radius: 0.5rem;
+        font-weight: 600;
+        padding: 0.6rem 1.2rem;
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .stButton > button[kind="primary"] {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    /* Text Areas */
+    .stTextArea textarea {
+        border-radius: 0.5rem;
+        border: 2px solid #e0e7ef;
+        padding: 0.75rem;
+        font-size: 1rem;
+    }
+    
+    .stTextArea textarea:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    /* Tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 1rem;
+        background: white;
+        padding: 0.5rem;
+        border-radius: 0.75rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 0.5rem;
+        font-weight: 600;
+        padding: 0.75rem 1.5rem;
+        color: #4a5568;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white !important;
+    }
+    
+    /* Sidebar */
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+    }
+    
+    /* Ensure text is visible */
+    h1, h2, h3, h4, h5, h6, p, span, div, label {
+        color: #2d3748;
+    }
+    
+    /* Markdown headers */
+    .element-container h1,
+    .element-container h2,
+    .element-container h3 {
+        color: #2d3748 !important;
+    }
+    
+    /* DataFrame */
+    .stDataFrame {
+        border-radius: 0.75rem;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+    
+    /* Divider */
+    hr {
+        margin: 1.5rem 0;
+        border: none;
+        border-top: 2px solid #e0e7ef;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 def load_css(path: str):
-    """Load external CSS file"""
+    """Load external CSS file (optional enhancement)"""
     try:
         with open(path, "r", encoding="utf-8") as f:
             st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
     except FileNotFoundError:
-        st.warning(f"⚠️ CSS file not found: {path}")
+        # CSS inline sudah cukup, tidak perlu warning
+        pass
 
-# Load CSS (akan dibuat di assets/style.css)
+# Try to load external CSS (optional)
 load_css("assets/style.css")
 
 # ============================================
@@ -214,19 +415,25 @@ def main():
         
         st.markdown("### ℹ️ Model Info")
         st.markdown(f"""
-        **Architecture:** Deep Neural Network  
-        **Features:** {config.get('n_features', 'N/A')} (TF-IDF + Numeric)  
-        **Performance:**
-        - PR-AUC: 0.953
-        - F1-Macro: 0.735
-        """)
+        <div style='background: white; padding: 1rem; border-radius: 0.5rem; border-left: 4px solid #667eea;'>
+        <strong>Architecture:</strong> Deep Neural Network<br>
+        <strong>Features:</strong> {config.get('n_features', 'N/A')} (TF-IDF + Numeric)<br>
+        <strong>Performance:</strong><br>
+        • PR-AUC: 0.953<br>
+        • F1-Macro: 0.735
+        </div>
+        """, unsafe_allow_html=True)
         
         st.divider()
         
         st.markdown("### 💡 Tips Input")
-        st.write("- Tulis review minimal 5-10 kata")
-        st.write("- Sertakan rating & helpful votes")
-        st.write("- Gunakan Bahasa Indonesia")
+        st.markdown("""
+        <div style='background: #fff3cd; padding: 1rem; border-radius: 0.5rem; color: #856404;'>
+        • Tulis review minimal 5-10 kata<br>
+        • Sertakan rating & helpful votes<br>
+        • Gunakan Bahasa Indonesia
+        </div>
+        """, unsafe_allow_html=True)
         
         st.divider()
         
@@ -259,12 +466,17 @@ def main():
         
         # LEFT COLUMN: INPUT
         with left:
-            st.markdown("### 📝 Input Review")
+            st.markdown("""
+            <div style='background: white; padding: 1rem; border-radius: 0.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 1rem;'>
+            <h3 style='color: #667eea; margin-top: 0;'>📝 Input Review</h3>
+            </div>
+            """, unsafe_allow_html=True)
             
             text_input = st.text_area(
                 "Masukkan review:",
                 height=150,
-                placeholder="Contoh: Produk bagus, pengiriman cepat, packing rapi. Seller responsif!"
+                placeholder="Contoh: Produk bagus, pengiriman cepat, packing rapi. Seller responsif!",
+                label_visibility="collapsed"
             )
             
             col_rating, col_helpful = st.columns(2)
@@ -282,7 +494,11 @@ def main():
                 )
             
             # Example buttons
-            st.markdown("##### 📋 Contoh Review")
+            st.markdown("""
+            <div style='background: white; padding: 1rem; border-radius: 0.5rem; margin-top: 1rem;'>
+            <h5 style='color: #667eea; margin-top: 0;'>📋 Contoh Review</h5>
+            </div>
+            """, unsafe_allow_html=True)
             c1, c2 = st.columns(2)
             with c1:
                 if st.button("✅ Real Review", use_container_width=True):
@@ -317,7 +533,11 @@ def main():
         
         # RIGHT COLUMN: HASIL
         with right:
-            st.markdown("### 🎯 Hasil Prediksi")
+            st.markdown("""
+            <div style='background: white; padding: 1rem; border-radius: 0.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 1rem;'>
+            <h3 style='color: #667eea; margin-top: 0;'>🎯 Hasil Prediksi</h3>
+            </div>
+            """, unsafe_allow_html=True)
             st.markdown('<div class="card">', unsafe_allow_html=True)
             
             if do_pred:
@@ -350,24 +570,49 @@ def main():
                         st.progress(min(result['confidence'], 1.0))
                         
                         # Performance metrics
-                        st.markdown("##### ⚡ Performance")
+                        st.markdown("""
+                        <h5 style='color: #667eea; margin-top: 1.5rem;'>⚡ Performance</h5>
+                        """, unsafe_allow_html=True)
                         perf_c1, perf_c2, perf_c3 = st.columns(3)
                         perf_c1.metric("Preprocessing", f"{result['preprocess_time_ms']:.1f}ms")
                         perf_c2.metric("Prediction", f"{result['predict_time_ms']:.1f}ms")
                         perf_c3.metric("Total", f"{result['total_time_ms']:.1f}ms")
                         
                         # Interpretation
-                        st.markdown("##### 📊 Interpretasi")
+                        st.markdown("""
+                        <h5 style='color: #667eea; margin-top: 1.5rem;'>📊 Interpretasi</h5>
+                        """, unsafe_allow_html=True)
+                        
                         if result['p_fake'] >= 0.8:
-                            st.error("🚨 Sangat mungkin fake review")
+                            st.markdown("""
+                            <div style='background: #f8d7da; padding: 1rem; border-radius: 0.5rem; border-left: 4px solid #dc3545;'>
+                            <strong style='color: #721c24;'>🚨 Sangat mungkin fake review</strong>
+                            </div>
+                            """, unsafe_allow_html=True)
                         elif result['p_fake'] >= 0.6:
-                            st.warning("⚠️ Kemungkinan fake review")
+                            st.markdown("""
+                            <div style='background: #fff3cd; padding: 1rem; border-radius: 0.5rem; border-left: 4px solid #ffc107;'>
+                            <strong style='color: #856404;'>⚠️ Kemungkinan fake review</strong>
+                            </div>
+                            """, unsafe_allow_html=True)
                         elif result['p_fake'] >= 0.4:
-                            st.info("ℹ️ Tidak pasti - perlu review manual")
+                            st.markdown("""
+                            <div style='background: #d1ecf1; padding: 1rem; border-radius: 0.5rem; border-left: 4px solid #17a2b8;'>
+                            <strong style='color: #0c5460;'>ℹ️ Tidak pasti - perlu review manual</strong>
+                            </div>
+                            """, unsafe_allow_html=True)
                         elif result['p_fake'] >= 0.2:
-                            st.success("✅ Kemungkinan review asli")
+                            st.markdown("""
+                            <div style='background: #d4edda; padding: 1rem; border-radius: 0.5rem; border-left: 4px solid #28a745;'>
+                            <strong style='color: #155724;'>✅ Kemungkinan review asli</strong>
+                            </div>
+                            """, unsafe_allow_html=True)
                         else:
-                            st.success("✅✅ Sangat mungkin review asli")
+                            st.markdown("""
+                            <div style='background: #d4edda; padding: 1rem; border-radius: 0.5rem; border-left: 4px solid #28a745;'>
+                            <strong style='color: #155724;'>✅✅ Sangat mungkin review asli</strong>
+                            </div>
+                            """, unsafe_allow_html=True)
                         
                         # Save to history
                         st.session_state.history.insert(
@@ -384,16 +629,29 @@ def main():
                             }
                         )
             else:
-                st.caption("👆 Klik tombol **Prediksi** untuk melihat hasil")
+                st.markdown("""
+                <div style='background: #f8f9fa; padding: 2rem; border-radius: 0.5rem; text-align: center; border: 2px dashed #dee2e6;'>
+                <p style='color: #6c757d; margin: 0; font-size: 1.1rem;'>👆 Klik tombol <strong>Prediksi</strong> untuk melihat hasil</p>
+                </div>
+                """, unsafe_allow_html=True)
             
             st.markdown("</div>", unsafe_allow_html=True)
     
     # ========== TAB: HISTORI ==========
     with tab_history:
-        st.markdown("### 📜 Histori Prediksi (Session Ini)")
+        st.markdown("""
+        <div style='background: white; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 1rem;'>
+        <h3 style='color: #667eea; margin-top: 0;'>📜 Histori Prediksi (Session Ini)</h3>
+        </div>
+        """, unsafe_allow_html=True)
         
         if len(st.session_state.history) == 0:
-            st.info("📭 Belum ada histori prediksi")
+            st.markdown("""
+            <div style='background: #d1ecf1; padding: 2rem; border-radius: 0.75rem; text-align: center; border-left: 4px solid #17a2b8;'>
+            <h4 style='color: #0c5460; margin: 0;'>📭 Belum ada histori prediksi</h4>
+            <p style='color: #0c5460; margin-top: 0.5rem;'>Lakukan prediksi untuk melihat histori</p>
+            </div>
+            """, unsafe_allow_html=True)
         else:
             df = pd.DataFrame(st.session_state.history)
             st.dataframe(
@@ -419,52 +677,75 @@ def main():
         col1, col2 = st.columns(2)
         
         with col1:
-            st.markdown("#### 🧠 Model")
-            st.write("""
-            Aplikasi ini menggunakan **Deep Neural Network (DNN)** yang 
+            st.markdown("""
+            <div style='background: white; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 1rem;'>
+            <h4 style='color: #667eea; margin-top: 0;'>🧠 Model</h4>
+            <p style='color: #2d3748;'>
+            Aplikasi ini menggunakan <strong>Deep Neural Network (DNN)</strong> yang 
             dilatih dengan kombinasi fitur:
-            - **TF-IDF** untuk ekstraksi fitur teks
-            - **Numeric features** (rating, helpful votes)
-            
+            </p>
+            <ul style='color: #2d3748;'>
+            <li><strong>TF-IDF</strong> untuk ekstraksi fitur teks</li>
+            <li><strong>Numeric features</strong> (rating, helpful votes)</li>
+            </ul>
+            <p style='color: #2d3748;'>
             Model dapat mendeteksi fake review dengan akurasi tinggi 
             berdasarkan pola linguistik dan metadata review.
-            """)
+            </p>
+            </div>
+            """, unsafe_allow_html=True)
             
-            st.markdown("#### 📊 Performance")
-            st.write("""
-            - **PR-AUC**: 0.953
-            - **F1-Macro**: 0.735
-            - **Inference Time**: ~64ms (avg)
-            """)
+            st.markdown("""
+            <div style='background: white; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1);'>
+            <h4 style='color: #667eea; margin-top: 0;'>📊 Performance</h4>
+            <ul style='color: #2d3748;'>
+            <li><strong>PR-AUC:</strong> 0.953</li>
+            <li><strong>F1-Macro:</strong> 0.735</li>
+            <li><strong>Inference Time:</strong> ~64ms (avg)</li>
+            </ul>
+            </div>
+            """, unsafe_allow_html=True)
         
         with col2:
-            st.markdown("#### 🎨 Visualisasi")
-            st.write("""
-            Tampilan aplikasi menggunakan:
-            - Custom CSS untuk styling modern
-            - Tab layout untuk navigasi mudah
-            - Real-time performance metrics
-            - History tracking dengan session state
-            """)
+            st.markdown("""
+            <div style='background: white; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 1rem;'>
+            <h4 style='color: #667eea; margin-top: 0;'>🎨 Visualisasi</h4>
+            <p style='color: #2d3748;'>Tampilan aplikasi menggunakan:</p>
+            <ul style='color: #2d3748;'>
+            <li>Custom CSS untuk styling modern</li>
+            <li>Tab layout untuk navigasi mudah</li>
+            <li>Real-time performance metrics</li>
+            <li>History tracking dengan session state</li>
+            </ul>
+            </div>
+            """, unsafe_allow_html=True)
             
-            st.markdown("#### 🔧 Tech Stack")
-            st.write("""
-            - **Framework**: Streamlit
-            - **ML**: TensorFlow/Keras
-            - **NLP**: TF-IDF Vectorizer
-            - **Deployment**: CPU/GPU inference
-            """)
+            st.markdown("""
+            <div style='background: white; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1);'>
+            <h4 style='color: #667eea; margin-top: 0;'>🔧 Tech Stack</h4>
+            <ul style='color: #2d3748;'>
+            <li><strong>Framework:</strong> Streamlit</li>
+            <li><strong>ML:</strong> TensorFlow/Keras</li>
+            <li><strong>NLP:</strong> TF-IDF Vectorizer</li>
+            <li><strong>Deployment:</strong> CPU/GPU inference</li>
+            </ul>
+            </div>
+            """, unsafe_allow_html=True)
         
         st.divider()
         
-        st.markdown("#### 📖 Cara Penggunaan")
-        st.write("""
-        1. Masukkan teks review di kolom input
-        2. Tentukan rating (1-5 bintang) dan helpful votes
-        3. Klik tombol **Prediksi**
-        4. Lihat hasil prediksi beserta confidence score
-        5. Atur threshold di sidebar untuk sensitivitas deteksi
-        """)
+        st.markdown("""
+        <div style='background: white; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1);'>
+        <h4 style='color: #667eea; margin-top: 0;'>📖 Cara Penggunaan</h4>
+        <ol style='color: #2d3748; line-height: 1.8;'>
+        <li>Masukkan teks review di kolom input</li>
+        <li>Tentukan rating (1-5 bintang) dan helpful votes</li>
+        <li>Klik tombol <strong>Prediksi</strong></li>
+        <li>Lihat hasil prediksi beserta confidence score</li>
+        <li>Atur threshold di sidebar untuk sensitivitas deteksi</li>
+        </ol>
+        </div>
+        """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
