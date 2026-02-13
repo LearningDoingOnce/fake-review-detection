@@ -263,7 +263,7 @@ def main():
             - Fitur utama:
               - TF-IDF untuk teks review
               - Rating & helpful votes sebagai fitur numerik
-            - Evaluasi menggunakan **accuracy, precision, recall, dan F1-score**.
+            - Evaluasi menggunakan **accuracy, PR-AUC, MCC, dan F1-score**.
 
             ### Tentang Aplikasi
             - Dibangun menggunakan **Streamlit**.
