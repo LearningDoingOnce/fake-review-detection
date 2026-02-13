@@ -24,7 +24,7 @@ st.set_page_config(
 )
 
 # ============================================
-# CUSTOM CSS (ENHANCED UI)
+# CUSTOM CSS (UI ONLY)
 # ============================================
 st.markdown("""
 <style>
@@ -37,9 +37,9 @@ st.markdown("""
 }
 .card {
     background: #ffffff;
-    padding: 1.2rem;
+    padding: 1.3rem;
     border-radius: 0.75rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.06);
 }
 .result-real {
     background-color: #d4edda;
@@ -59,10 +59,6 @@ st.markdown("""
     font-size: 1.2rem;
     font-weight: bold;
 }
-.small-note {
-    color: #6c757d;
-    font-size: 0.9rem;
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -73,27 +69,22 @@ if "history" not in st.session_state:
     st.session_state.history = []
 
 # ============================================
-# OPTIMIZED LOADING WITH CACHING
+# LOAD MODEL (UNCHANGED)
 # ============================================
 @st.cache_resource(show_spinner=True)
 def load_model_and_preprocessing():
-    try:
-        model = tf.keras.models.load_model("dnn_model.h5", compile=False)
+    model = tf.keras.models.load_model("dnn_model.h5", compile=False)
 
-        with open("preprocessing_objects.pkl", "rb") as f:
-            preprocessing = pickle.load(f)
+    with open("preprocessing_objects.pkl", "rb") as f:
+        preprocessing = pickle.load(f)
 
-        with open("label_encoder.pkl", "rb") as f:
-            label_encoder = pickle.load(f)
+    with open("label_encoder.pkl", "rb") as f:
+        label_encoder = pickle.load(f)
 
-        with open("config.json", "r") as f:
-            config = json.load(f)
+    with open("config.json", "r") as f:
+        config = json.load(f)
 
-        return model, preprocessing, label_encoder, config
-
-    except Exception as e:
-        st.error(f"❌ Gagal load model: {e}")
-        return None, None, None, None
+    return model, preprocessing, label_encoder, config
 
 # ============================================
 # PREPROCESSING (UNCHANGED)
@@ -115,14 +106,20 @@ def preprocess_input(text, rating, helpful, preprocessing, config):
     return combined.toarray()
 
 # ============================================
-# PREDICTION (UNCHANGED)
+# PREDICTION (SPEED METRICS ACTIVE)
 # ============================================
 def predict_review(text, rating, helpful, model, preprocessing, label_encoder, config):
+    start_pre = time.time()
     X = preprocess_input(text, rating, helpful, preprocessing, config)
+    preprocess_time = (time.time() - start_pre) * 1000
 
+    start_pred = time.time()
     proba = model.predict(X, verbose=0, batch_size=1)[0][0]
-    threshold = config.get("threshold", 0.5)
+    predict_time = (time.time() - start_pred) * 1000
 
+    total_time = preprocess_time + predict_time
+
+    threshold = config.get("threshold", 0.5)
     prediction = 1 if proba >= threshold else 0
     label = label_encoder.inverse_transform([prediction])[0]
     confidence = float(proba) if prediction == 1 else float(1 - proba)
@@ -131,6 +128,9 @@ def predict_review(text, rating, helpful, model, preprocessing, label_encoder, c
         "label": label,
         "probability": float(proba),
         "confidence": confidence,
+        "preprocess_time_ms": preprocess_time,
+        "predict_time_ms": predict_time,
+        "total_time_ms": total_time
     }
 
 # ============================================
@@ -143,19 +143,6 @@ def main():
     )
 
     model, preprocessing, label_encoder, config = load_model_and_preprocessing()
-    if model is None:
-        st.stop()
-
-    # SIDEBAR
-    with st.sidebar:
-        st.header("ℹ️ Model Info")
-        st.markdown(f"""
-        **Model:** Deep Neural Network  
-        **Features:** {config.get('n_features', 'N/A')}  
-        **Classes:** {', '.join(config.get('classes', ['Real', 'Fake']))}
-        """)
-        st.divider()
-        st.info("Model & preprocessing sudah di-cache.")
 
     # =======================
     # TABS
@@ -169,10 +156,11 @@ def main():
     # ===================================
     with tab_pred:
         st.markdown('<div class="card">', unsafe_allow_html=True)
+
         st.subheader("📝 Input Review")
 
         text_input = st.text_area(
-            "Teks Review",
+            "Review Text",
             height=150,
             placeholder="Contoh: Produk bagus, pengiriman cepat, recommended!"
         )
@@ -206,8 +194,7 @@ def main():
                         "label": result["label"],
                         "confidence": round(result["confidence"], 4),
                         "fake_probability": round(result["probability"], 4),
-                        "rating": rating_input,
-                        "helpful": helpful_input,
+                        "latency_ms": round(result["total_time_ms"], 2),
                         "text": text_input[:200] + ("..." if len(text_input) > 200 else "")
                     }
                 )
@@ -227,10 +214,19 @@ def main():
                         unsafe_allow_html=True
                     )
 
+                # METRICS
+                c1, c2, c3 = st.columns(3)
+                c1.metric("Prediction", result["label"])
+                c2.metric("Confidence", f"{result['confidence']*100:.1f}%")
+                c3.metric("⚡ Time", f"{result['total_time_ms']:.1f} ms")
+
+                st.write(f"**Fake Probability:** {result['probability']*100:.1f}%")
                 st.progress(result["probability"])
-                st.caption(
-                    f"Fake Probability: {result['probability']*100:.1f}%"
-                )
+
+                with st.expander("⏱️ Performance Details"):
+                    st.write(f"- Preprocessing: {result['preprocess_time_ms']:.2f} ms")
+                    st.write(f"- Prediction: {result['predict_time_ms']:.2f} ms")
+                    st.write(f"- Total: {result['total_time_ms']:.2f} ms")
 
         st.markdown("</div>", unsafe_allow_html=True)
 
@@ -239,16 +235,14 @@ def main():
     # ===================================
     with tab_history:
         st.subheader("📜 Histori Prediksi (Session Ini)")
-
         if len(st.session_state.history) == 0:
             st.info("Belum ada histori.")
         else:
-            df = pd.DataFrame(st.session_state.history)
-            st.dataframe(df, use_container_width=True, hide_index=True)
-
-            if st.button("🗑️ Hapus Histori"):
-                st.session_state.history = []
-                st.success("Histori berhasil dihapus.")
+            st.dataframe(
+                pd.DataFrame(st.session_state.history),
+                use_container_width=True,
+                hide_index=True
+            )
 
     # ===================================
     # TAB TENTANG
@@ -256,24 +250,16 @@ def main():
     with tab_about:
         st.subheader("ℹ️ Tentang Aplikasi")
         st.markdown("""
-        **Fake Review Detection System**  
-        Aplikasi ini mendeteksi ulasan palsu menggunakan
-        **Deep Neural Network (DNN)** berbasis **TF-IDF + fitur numerik**.
+        Aplikasi ini mendeteksi **Fake Review** menggunakan
+        **Deep Neural Network (DNN)** dengan fitur TF-IDF dan numerik.
 
-        ### 🔧 Teknologi
-        - TensorFlow / Keras
-        - TF-IDF Vectorizer
-        - Scikit-learn Scaler
-        - Streamlit
-
-        ### 🎯 Output
-        - Label Real / Fake
-        - Confidence Score
+        **Output utama:**
+        - Real / Fake
+        - Confidence
         - Fake Probability
+        - Inference Latency (ms)
 
-        ### ⚠️ Catatan
-        Aplikasi ini bersifat **research & demo**, bukan pengganti
-        moderasi manusia.
+        Model dioptimalkan untuk **real-time prediction**.
         """)
 
 if __name__ == "__main__":
