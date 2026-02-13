@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
 Fake Review Detection System
-Streamlit Deployment - Optimized Version
+Streamlit Deployment - With Enhanced Visualization
+Model: DNN (TF-IDF + Numeric Features)
+Visualization: Inspired by IndoBERT app
 """
 
 import streamlit as st
@@ -12,80 +14,53 @@ import numpy as np
 import pandas as pd
 import time
 from scipy.sparse import hstack
+from datetime import datetime
 
 # ============================================
 # PAGE CONFIGURATION
 # ============================================
 st.set_page_config(
-    page_title="Fake Review Detector",
+    page_title="Fake Review Detector (DNN)",
     page_icon="🔍",
-    layout="centered",
-    initial_sidebar_state="expanded"
+    layout="wide",
 )
 
-# Custom CSS
-st.markdown("""
-    <style>
-    .main-header {
-        font-size: 2.5rem;
-        font-weight: bold;
-        color: #1f77b4;
-        text-align: center;
-        margin-bottom: 2rem;
-    }
-    .result-real {
-        background-color: #d4edda;
-        color: #155724;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        border-left: 4px solid #28a745;
-        font-size: 1.2rem;
-        font-weight: bold;
-    }
-    .result-fake {
-        background-color: #f8d7da;
-        color: #721c24;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        border-left: 4px solid #dc3545;
-        font-size: 1.2rem;
-        font-weight: bold;
-    }
-    </style>
-""", unsafe_allow_html=True)
+# ============================================
+# LOAD CSS
+# ============================================
+def load_css(path: str):
+    """Load external CSS file"""
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+    except FileNotFoundError:
+        st.warning(f"⚠️ CSS file not found: {path}")
+
+# Load CSS (akan dibuat di assets/style.css)
+load_css("assets/style.css")
 
 # ============================================
-# OPTIMIZED LOADING WITH BETTER CACHING
+# MODEL LOADING (OPTIMIZED WITH CACHING)
 # ============================================
 
 @st.cache_resource(show_spinner=True)
 def load_model_and_preprocessing():
     """
     Load model dan preprocessing objects - CACHED for performance
-    This function only runs once and caches the results
     """
     load_start = time.time()
     
     try:
-        # Progress indicator
-        status = st.empty()
-        
-        # 1. Load DNN model (usually the slowest)
-        status.text("⏳ Loading model...")
-        model = tf.keras.models.load_model('dnn_model.h5', compile=False)  # compile=False is faster
-        model_time = time.time() - load_start
+        # 1. Load DNN model
+        model = tf.keras.models.load_model('dnn_model.h5', compile=False)
         
         # 2. Load preprocessing objects
-        status.text("⏳ Loading preprocessing...")
         with open('preprocessing_objects.pkl', 'rb') as f:
             preprocessing = pickle.load(f)
-        prep_time = time.time() - load_start - model_time
         
         # 3. Load label encoder
-        status.text("⏳ Loading label encoder...")
         with open('label_encoder.pkl', 'rb') as f:
             label_encoder = pickle.load(f)
-        le_time = time.time() - load_start - model_time - prep_time
         
         # 4. Load config
         with open('config.json', 'r') as f:
@@ -93,11 +68,6 @@ def load_model_and_preprocessing():
         
         total_time = time.time() - load_start
         
-        status.empty()  # Clear loading message
-        
-        # Log loading times (for debugging)
-        print(f"✓ Model loaded in {model_time:.2f}s")
-        print(f"✓ Preprocessing loaded in {prep_time:.2f}s")
         print(f"✓ Total load time: {total_time:.2f}s")
         
         return model, preprocessing, label_encoder, config
@@ -119,15 +89,13 @@ def load_model_and_preprocessing():
         return None, None, None, None
 
 # ============================================
-# OPTIMIZED PREPROCESSING
+# PREPROCESSING
 # ============================================
 
 def preprocess_input(text, rating, helpful, preprocessing, config):
-    """
-    Preprocess input untuk model prediction - OPTIMIZED
-    """
+    """Preprocess input untuk model prediction"""
     try:
-        # Create DataFrame (minimal)
+        # Create DataFrame
         input_df = pd.DataFrame([{
             config['text_col']: text,
             'rating': float(rating),
@@ -144,10 +112,9 @@ def preprocess_input(text, rating, helpful, preprocessing, config):
         # Transform numeric dengan Scaler
         numeric_scaled = scaler.transform(input_df[['rating', 'helpful']])
         
-        # Combine using hstack (efficient for sparse matrices)
+        # Combine using hstack
         combined = hstack([text_tfidf, numeric_scaled])
         
-        # Convert to dense array for DNN
         return combined.toarray()
     
     except Exception as e:
@@ -155,12 +122,13 @@ def preprocess_input(text, rating, helpful, preprocessing, config):
         return None
 
 # ============================================
-# OPTIMIZED PREDICTION
+# PREDICTION
 # ============================================
 
-def predict_review(text, rating, helpful, model, preprocessing, label_encoder, config):
+def predict_review(text, rating, helpful, model, preprocessing, label_encoder, config, threshold=0.5):
     """
-    Lakukan prediksi dengan timing - OPTIMIZED
+    Lakukan prediksi dengan timing
+    Returns: dict with prediction results
     """
     try:
         # Preprocessing
@@ -170,7 +138,7 @@ def predict_review(text, rating, helpful, model, preprocessing, label_encoder, c
             return None
         preprocess_time = (time.time() - start_preprocess) * 1000
         
-        # Prediction (dengan batch size 1)
+        # Prediction
         start_predict = time.time()
         proba = model.predict(X_processed, verbose=0, batch_size=1)[0][0]
         predict_time = (time.time() - start_predict) * 1000
@@ -178,17 +146,21 @@ def predict_review(text, rating, helpful, model, preprocessing, label_encoder, c
         # Total time
         total_time = preprocess_time + predict_time
         
-        # Determine label
-        threshold = config.get('threshold', 0.5)
+        # Determine label with custom threshold
         prediction = 1 if proba >= threshold else 0
         label = label_encoder.inverse_transform([prediction])[0]
         
+        # Calculate probabilities
+        p_fake = float(proba)
+        p_real = float(1 - proba)
+        
         # Calculate confidence
-        confidence = float(proba) if prediction == 1 else float(1 - proba)
+        confidence = max(p_real, p_fake)
         
         return {
             'label': label,
-            'probability': float(proba),  # Probability of being FAKE
+            'p_real': p_real,
+            'p_fake': p_fake,
             'confidence': confidence,
             'prediction': prediction,
             'preprocess_time_ms': preprocess_time,
@@ -203,163 +175,296 @@ def predict_review(text, rating, helpful, model, preprocessing, label_encoder, c
         return None
 
 # ============================================
+# HELPER FUNCTIONS
+# ============================================
+
+def badge(label: str):
+    """Generate HTML badge for prediction result"""
+    cls = "badge-fake" if label == "Fake" else "badge-real"
+    return f'<span class="badge {cls}">{label}</span>'
+
+# ============================================
+# SESSION STATE
+# ============================================
+
+if "history" not in st.session_state:
+    st.session_state.history = []
+
+# ============================================
 # MAIN APP
 # ============================================
 
 def main():
-    st.markdown('<div class="main-header">🔍 Fake Review Detection System</div>', 
-                unsafe_allow_html=True)
-    
-    # Load model (this will be cached after first run)
-    with st.spinner("🚀 Loading model... (first time only)"):
-        model, preprocessing, label_encoder, config = load_model_and_preprocessing()
+    # Load model (cached after first run)
+    model, preprocessing, label_encoder, config = load_model_and_preprocessing()
     
     if model is None:
         st.stop()
     
-    # Success message (only shows after model loads)
-    st.success("✅ Model loaded successfully!")
-    
-    # Sidebar
+    # ---------- SIDEBAR ----------
     with st.sidebar:
-        st.header("ℹ️ Model Information")
+        st.markdown("## ⚙️ Pengaturan")
+        threshold = st.slider(
+            "Ambang Fake (threshold p_fake)", 
+            0.30, 0.90, 0.50, 0.05,
+            help="Jika p_fake ≥ threshold → Fake"
+        )
+        
+        st.divider()
+        
+        st.markdown("### ℹ️ Model Info")
         st.markdown(f"""
-        **Architecture:** Deep Neural Network (DNN)  
+        **Architecture:** Deep Neural Network  
         **Features:** {config.get('n_features', 'N/A')} (TF-IDF + Numeric)  
-        **Classes:** {', '.join(config.get('classes', ['Real', 'Fake']))}  
-        **Performance:** 
+        **Performance:**
         - PR-AUC: 0.953
         - F1-Macro: 0.735
         """)
         
         st.divider()
         
-        st.header("⚡ Speed")
-        st.markdown("""
-        | Method | Latency |
-        |--------|---------|
-        | **This System** | **~64ms** |
-        | LLM API | ~185ms |
-        """)
+        st.markdown("### 💡 Tips Input")
+        st.write("- Tulis review minimal 5-10 kata")
+        st.write("- Sertakan rating & helpful votes")
+        st.write("- Gunakan Bahasa Indonesia")
         
         st.divider()
         
-        st.header("💡 Tips")
-        st.info("Model is cached - subsequent predictions will be faster!")
+        if st.button("🗑️ Hapus Histori", use_container_width=True):
+            st.session_state.history = []
+            st.rerun()
     
-    # Input form
-    st.subheader("📝 Input Review")
+    # ---------- HEADER ----------
+    st.markdown(
+        """
+        <div class="hero">
+          <div>
+            <div class="hero-title">🔍 Deteksi Fake Review (DNN)</div>
+            <div class="hero-subtitle">
+              Masukkan review produk (Bahasa Indonesia) untuk melihat prediksi Real/Fake 
+              dengan Deep Neural Network berbasis TF-IDF + Numeric Features.
+            </div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     
-    col1, col2 = st.columns([2, 1])
+    # ---------- TABS ----------
+    tab_pred, tab_history, tab_about = st.tabs(["📊 Prediksi", "📜 Histori", "ℹ️ Tentang"])
     
-    with col1:
-        text_input = st.text_area(
-            "Review Text (Bahasa Indonesia)",
-            placeholder="Contoh: Produk bagus, pengiriman cepat, recommended!",
-            height=150,
-            help="Masukkan teks review dalam Bahasa Indonesia"
-        )
-    
-    with col2:
-        rating_input = st.slider(
-            "Rating", 
-            1.0, 5.0, 5.0, 0.5,
-            help="Rating produk (1-5 bintang)"
-        )
-        helpful_input = st.number_input(
-            "Helpful Votes", 
-            0, 1000, 0,
-            help="Jumlah orang yang menganggap review ini membantu"
-        )
-    
-    # Example reviews
-    with st.expander("📋 Contoh Review"):
-        col_a, col_b = st.columns(2)
-        with col_a:
-            if st.button("Contoh Real Review"):
-                st.session_state['example_text'] = "Produk sangat bagus, kualitas premium. Pengiriman cepat dan packing rapi. Seller responsif dan ramah. Highly recommended untuk yang cari kualitas terbaik!"
-                st.session_state['example_rating'] = 5.0
-                st.session_state['example_helpful'] = 15
-                st.rerun()
-        with col_b:
-            if st.button("Contoh Fake Review"):
-                st.session_state['example_text'] = "Bagus"
-                st.session_state['example_rating'] = 5.0
-                st.session_state['example_helpful'] = 0
-                st.rerun()
-    
-    # Use example if available
-    if 'example_text' in st.session_state:
-        text_input = st.session_state.get('example_text', text_input)
-        rating_input = st.session_state.get('example_rating', rating_input)
-        helpful_input = st.session_state.get('example_helpful', helpful_input)
-        # Clear example after use
-        for key in ['example_text', 'example_rating', 'example_helpful']:
-            if key in st.session_state:
-                del st.session_state[key]
-    
-    # Analyze button
-    if st.button("🔍 Analyze Review", type="primary", use_container_width=True):
-        if not text_input.strip():
-            st.warning("⚠️ Masukkan teks review terlebih dahulu!")
-        else:
-            with st.spinner("Analyzing..."):
-                result = predict_review(
-                    text_input, rating_input, helpful_input,
-                    model, preprocessing, label_encoder, config
+    # ========== TAB: PREDIKSI ==========
+    with tab_pred:
+        left, right = st.columns([1.2, 1])
+        
+        # LEFT COLUMN: INPUT
+        with left:
+            st.markdown("### 📝 Input Review")
+            
+            text_input = st.text_area(
+                "Masukkan review:",
+                height=150,
+                placeholder="Contoh: Produk bagus, pengiriman cepat, packing rapi. Seller responsif!"
+            )
+            
+            col_rating, col_helpful = st.columns(2)
+            with col_rating:
+                rating_input = st.slider(
+                    "⭐ Rating", 
+                    1.0, 5.0, 5.0, 0.5,
+                    help="Rating produk (1-5 bintang)"
+                )
+            with col_helpful:
+                helpful_input = st.number_input(
+                    "👍 Helpful Votes", 
+                    0, 1000, 0,
+                    help="Jumlah yang menganggap review membantu"
                 )
             
-            if result is None:
-                st.error("❌ Prediction failed. Please check the error messages above.")
-                st.stop()
+            # Example buttons
+            st.markdown("##### 📋 Contoh Review")
+            c1, c2 = st.columns(2)
+            with c1:
+                if st.button("✅ Real Review", use_container_width=True):
+                    st.session_state['example_text'] = "Produk sangat bagus, kualitas premium. Pengiriman cepat dan packing rapi. Seller responsif dan ramah. Highly recommended untuk yang cari kualitas terbaik!"
+                    st.session_state['example_rating'] = 5.0
+                    st.session_state['example_helpful'] = 15
+                    st.rerun()
+            with c2:
+                if st.button("⚠️ Fake Review", use_container_width=True):
+                    st.session_state['example_text'] = "Bagus"
+                    st.session_state['example_rating'] = 5.0
+                    st.session_state['example_helpful'] = 0
+                    st.rerun()
             
-            # Display result
-            st.divider()
+            # Use example if set
+            if 'example_text' in st.session_state:
+                text_input = st.session_state.get('example_text', text_input)
+                rating_input = st.session_state.get('example_rating', rating_input)
+                helpful_input = st.session_state.get('example_helpful', helpful_input)
+                # Clear example
+                for key in ['example_text', 'example_rating', 'example_helpful']:
+                    if key in st.session_state:
+                        del st.session_state[key]
             
-            if result['label'] == 'Fake':
-                st.markdown(
-                    f'<div class="result-fake">'
-                    f'⚠️ FAKE REVIEW DETECTED<br>Confidence: {result["confidence"]*100:.1f}%'
-                    f'</div>',
-                    unsafe_allow_html=True
-                )
-            else:
-                st.markdown(
-                    f'<div class="result-real">'
-                    f'✅ REAL REVIEW<br>Confidence: {result["confidence"]*100:.1f}%'
-                    f'</div>',
-                    unsafe_allow_html=True
-                )
+            # Action buttons
+            btn_c1, btn_c2 = st.columns([1, 1])
+            with btn_c1:
+                do_pred = st.button("🔍 Prediksi", use_container_width=True, type="primary")
+            with btn_c2:
+                if st.button("🔄 Reset", use_container_width=True):
+                    st.rerun()
+        
+        # RIGHT COLUMN: HASIL
+        with right:
+            st.markdown("### 🎯 Hasil Prediksi")
+            st.markdown('<div class="card">', unsafe_allow_html=True)
             
-            # Metrics
-            col1, col2, col3 = st.columns(3)
-            col1.metric("Prediction", result['label'])
-            col2.metric("Confidence", f"{result['confidence']*100:.1f}%")
-            col3.metric("⚡ Time", f"{result['total_time_ms']:.1f}ms")
-            
-            # Probability visualization
-            st.write(f"**Fake Probability:** {result['probability']*100:.1f}%")
-            st.progress(result['probability'])
-            
-            # Detailed timing (collapsible)
-            with st.expander("⏱️ Performance Details"):
-                st.write(f"- **Preprocessing:** {result['preprocess_time_ms']:.2f}ms")
-                st.write(f"- **Prediction:** {result['predict_time_ms']:.2f}ms")
-                st.write(f"- **Total:** {result['total_time_ms']:.2f}ms")
-                
-                # Interpretation
-                st.divider()
-                st.write("**Interpretation:**")
-                if result['probability'] >= 0.8:
-                    st.error("🚨 Very likely a fake review")
-                elif result['probability'] >= 0.6:
-                    st.warning("⚠️ Possibly a fake review")
-                elif result['probability'] >= 0.4:
-                    st.info("ℹ️ Uncertain - needs manual review")
-                elif result['probability'] >= 0.2:
-                    st.success("✅ Likely a genuine review")
+            if do_pred:
+                if not text_input.strip():
+                    st.warning("⚠️ Teks review masih kosong!")
                 else:
-                    st.success("✅✅ Very likely a genuine review")
+                    with st.spinner("Analyzing..."):
+                        result = predict_review(
+                            text_input, rating_input, helpful_input,
+                            model, preprocessing, label_encoder, config,
+                            threshold=threshold
+                        )
+                    
+                    if result is None:
+                        st.error("❌ Prediction failed")
+                    else:
+                        # Display prediction with badge
+                        st.markdown(
+                            f"<div class='result-row'>Prediksi: {badge(result['label'])}</div>",
+                            unsafe_allow_html=True
+                        )
+                        
+                        # Metrics
+                        m1, m2, m3 = st.columns(3)
+                        m1.metric("Prob Real", f"{result['p_real']:.4f}")
+                        m2.metric("Prob Fake", f"{result['p_fake']:.4f}")
+                        m3.metric("Confidence", f"{result['confidence']:.4f}")
+                        
+                        # Progress bar
+                        st.progress(min(result['confidence'], 1.0))
+                        
+                        # Performance metrics
+                        st.markdown("##### ⚡ Performance")
+                        perf_c1, perf_c2, perf_c3 = st.columns(3)
+                        perf_c1.metric("Preprocessing", f"{result['preprocess_time_ms']:.1f}ms")
+                        perf_c2.metric("Prediction", f"{result['predict_time_ms']:.1f}ms")
+                        perf_c3.metric("Total", f"{result['total_time_ms']:.1f}ms")
+                        
+                        # Interpretation
+                        st.markdown("##### 📊 Interpretasi")
+                        if result['p_fake'] >= 0.8:
+                            st.error("🚨 Sangat mungkin fake review")
+                        elif result['p_fake'] >= 0.6:
+                            st.warning("⚠️ Kemungkinan fake review")
+                        elif result['p_fake'] >= 0.4:
+                            st.info("ℹ️ Tidak pasti - perlu review manual")
+                        elif result['p_fake'] >= 0.2:
+                            st.success("✅ Kemungkinan review asli")
+                        else:
+                            st.success("✅✅ Sangat mungkin review asli")
+                        
+                        # Save to history
+                        st.session_state.history.insert(
+                            0,
+                            {
+                                "Waktu": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                "Prediksi": result['label'],
+                                "P(Real)": round(result['p_real'], 4),
+                                "P(Fake)": round(result['p_fake'], 4),
+                                "Confidence": round(result['confidence'], 4),
+                                "Rating": rating_input,
+                                "Helpful": helpful_input,
+                                "Review": text_input[:100] + ("..." if len(text_input) > 100 else "")
+                            }
+                        )
+            else:
+                st.caption("👆 Klik tombol **Prediksi** untuk melihat hasil")
+            
+            st.markdown("</div>", unsafe_allow_html=True)
+    
+    # ========== TAB: HISTORI ==========
+    with tab_history:
+        st.markdown("### 📜 Histori Prediksi (Session Ini)")
+        
+        if len(st.session_state.history) == 0:
+            st.info("📭 Belum ada histori prediksi")
+        else:
+            df = pd.DataFrame(st.session_state.history)
+            st.dataframe(
+                df, 
+                use_container_width=True, 
+                hide_index=True,
+                height=400
+            )
+            
+            # Download button
+            csv = df.to_csv(index=False).encode('utf-8')
+            st.download_button(
+                label="📥 Download CSV",
+                data=csv,
+                file_name=f"fake_review_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                mime="text/csv",
+            )
+    
+    # ========== TAB: TENTANG ==========
+    with tab_about:
+        st.markdown("### ℹ️ Tentang Aplikasi")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("#### 🧠 Model")
+            st.write("""
+            Aplikasi ini menggunakan **Deep Neural Network (DNN)** yang 
+            dilatih dengan kombinasi fitur:
+            - **TF-IDF** untuk ekstraksi fitur teks
+            - **Numeric features** (rating, helpful votes)
+            
+            Model dapat mendeteksi fake review dengan akurasi tinggi 
+            berdasarkan pola linguistik dan metadata review.
+            """)
+            
+            st.markdown("#### 📊 Performance")
+            st.write("""
+            - **PR-AUC**: 0.953
+            - **F1-Macro**: 0.735
+            - **Inference Time**: ~64ms (avg)
+            """)
+        
+        with col2:
+            st.markdown("#### 🎨 Visualisasi")
+            st.write("""
+            Tampilan aplikasi menggunakan:
+            - Custom CSS untuk styling modern
+            - Tab layout untuk navigasi mudah
+            - Real-time performance metrics
+            - History tracking dengan session state
+            """)
+            
+            st.markdown("#### 🔧 Tech Stack")
+            st.write("""
+            - **Framework**: Streamlit
+            - **ML**: TensorFlow/Keras
+            - **NLP**: TF-IDF Vectorizer
+            - **Deployment**: CPU/GPU inference
+            """)
+        
+        st.divider()
+        
+        st.markdown("#### 📖 Cara Penggunaan")
+        st.write("""
+        1. Masukkan teks review di kolom input
+        2. Tentukan rating (1-5 bintang) dan helpful votes
+        3. Klik tombol **Prediksi**
+        4. Lihat hasil prediksi beserta confidence score
+        5. Atur threshold di sidebar untuk sensitivitas deteksi
+        """)
 
 if __name__ == "__main__":
     main()
