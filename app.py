@@ -8,7 +8,6 @@ import streamlit as st
 import tensorflow as tf
 import pickle
 import json
-import numpy as np
 import pandas as pd
 import time
 from scipy.sparse import hstack
@@ -63,7 +62,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ============================================
-# SESSION STATE (HISTORY)
+# SESSION STATE
 # ============================================
 if "history" not in st.session_state:
     st.session_state.history = []
@@ -106,7 +105,7 @@ def preprocess_input(text, rating, helpful, preprocessing, config):
     return combined.toarray()
 
 # ============================================
-# PREDICTION (SPEED METRICS ACTIVE)
+# PREDICTION (WITH SPEED METRICS)
 # ============================================
 def predict_review(text, rating, helpful, model, preprocessing, label_encoder, config):
     start_pre = time.time()
@@ -134,6 +133,46 @@ def predict_review(text, rating, helpful, model, preprocessing, label_encoder, c
     }
 
 # ============================================
+# FAKE REVIEW INDICATORS (HEURISTIC)
+# ============================================
+def fake_review_indicators(text, rating, helpful, fake_prob):
+    indicators = []
+    word_count = len(text.split())
+
+    indicators.append({
+        "name": "Teks sangat pendek",
+        "status": word_count < 5,
+        "detail": f"{word_count} kata"
+    })
+
+    indicators.append({
+        "name": "Rating tinggi + teks minim",
+        "status": rating >= 4.5 and word_count < 10,
+        "detail": f"Rating {rating}, {word_count} kata"
+    })
+
+    indicators.append({
+        "name": "Tidak ada helpful vote",
+        "status": helpful == 0,
+        "detail": "Helpful = 0"
+    })
+
+    generic_words = ["bagus", "oke", "mantap", "recommended", "baik"]
+    indicators.append({
+        "name": "Mengandung kata generik",
+        "status": any(w in text.lower() for w in generic_words),
+        "detail": ", ".join(generic_words)
+    })
+
+    indicators.append({
+        "name": "Fake probability tinggi",
+        "status": fake_prob >= 0.6,
+        "detail": f"{fake_prob*100:.1f}%"
+    })
+
+    return indicators
+
+# ============================================
 # MAIN APP
 # ============================================
 def main():
@@ -144,20 +183,15 @@ def main():
 
     model, preprocessing, label_encoder, config = load_model_and_preprocessing()
 
-    # =======================
-    # TABS
-    # =======================
-    tab_pred, tab_history, tab_about = st.tabs(
-        ["🔍 Prediksi", "📜 Histori", "ℹ️ Tentang"]
+    tab_pred, tab_history, tab_indicator, tab_about = st.tabs(
+        ["🔍 Prediksi", "📜 Histori", "🧠 Indikator Fake", "ℹ️ Tentang"]
     )
 
-    # ===================================
+    # ==============================
     # TAB PREDIKSI
-    # ===================================
+    # ==============================
     with tab_pred:
         st.markdown('<div class="card">', unsafe_allow_html=True)
-
-        st.subheader("📝 Input Review")
 
         text_input = st.text_area(
             "Review Text",
@@ -175,18 +209,16 @@ def main():
             if not text_input.strip():
                 st.warning("Masukkan teks review terlebih dahulu.")
             else:
-                with st.spinner("Analyzing..."):
-                    result = predict_review(
-                        text_input,
-                        rating_input,
-                        helpful_input,
-                        model,
-                        preprocessing,
-                        label_encoder,
-                        config
-                    )
+                result = predict_review(
+                    text_input,
+                    rating_input,
+                    helpful_input,
+                    model,
+                    preprocessing,
+                    label_encoder,
+                    config
+                )
 
-                # SAVE HISTORY
                 st.session_state.history.insert(
                     0,
                     {
@@ -198,6 +230,13 @@ def main():
                         "text": text_input[:200] + ("..." if len(text_input) > 200 else "")
                     }
                 )
+
+                st.session_state["last_result"] = {
+                    "text": text_input,
+                    "rating": rating_input,
+                    "helpful": helpful_input,
+                    "fake_prob": result["probability"]
+                }
 
                 st.divider()
 
@@ -214,13 +253,11 @@ def main():
                         unsafe_allow_html=True
                     )
 
-                # METRICS
                 c1, c2, c3 = st.columns(3)
                 c1.metric("Prediction", result["label"])
                 c2.metric("Confidence", f"{result['confidence']*100:.1f}%")
                 c3.metric("⚡ Time", f"{result['total_time_ms']:.1f} ms")
 
-                st.write(f"**Fake Probability:** {result['probability']*100:.1f}%")
                 st.progress(result["probability"])
 
                 with st.expander("⏱️ Performance Details"):
@@ -230,11 +267,10 @@ def main():
 
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # ===================================
+    # ==============================
     # TAB HISTORI
-    # ===================================
+    # ==============================
     with tab_history:
-        st.subheader("📜 Histori Prediksi (Session Ini)")
         if len(st.session_state.history) == 0:
             st.info("Belum ada histori.")
         else:
@@ -244,22 +280,42 @@ def main():
                 hide_index=True
             )
 
-    # ===================================
+    # ==============================
+    # TAB INDIKATOR
+    # ==============================
+    with tab_indicator:
+        if "last_result" not in st.session_state:
+            st.info("Lakukan prediksi terlebih dahulu.")
+        else:
+            data = st.session_state["last_result"]
+            indicators = fake_review_indicators(
+                data["text"],
+                data["rating"],
+                data["helpful"],
+                data["fake_prob"]
+            )
+
+            for ind in indicators:
+                if ind["status"]:
+                    st.warning(f"⚠️ {ind['name']} — {ind['detail']}")
+                else:
+                    st.success(f"✅ {ind['name']}")
+
+    # ==============================
     # TAB TENTANG
-    # ===================================
+    # ==============================
     with tab_about:
-        st.subheader("ℹ️ Tentang Aplikasi")
         st.markdown("""
         Aplikasi ini mendeteksi **Fake Review** menggunakan
-        **Deep Neural Network (DNN)** dengan fitur TF-IDF dan numerik.
+        **Deep Neural Network (DNN)** dengan TF-IDF dan fitur numerik.
 
-        **Output utama:**
-        - Real / Fake
+        Output utama:
+        - Label Real / Fake
         - Confidence
         - Fake Probability
-        - Inference Latency (ms)
+        - Latency (ms)
 
-        Model dioptimalkan untuk **real-time prediction**.
+        Indikator fake bersifat heuristik dan tidak memengaruhi model.
         """)
 
 if __name__ == "__main__":
