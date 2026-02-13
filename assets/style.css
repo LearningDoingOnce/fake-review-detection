@@ -1,5 +1,5 @@
 /* ============================================
-   Fake Review Detector - Custom Styling
+   Fake Review Detector - DARK THEME
    ============================================ */
 
 /* ---------- Global Styles ---------- */
@@ -9,18 +9,19 @@
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-/* Streamlit adjustments */
+/* ---------- Dark Background ---------- */
 .stApp {
-    background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
 }
 
-/* ---------- Hero Section ---------- */
+/* ---------- Hero Section - Dark ---------- */
 .hero {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
     padding: 3rem 2rem;
     border-radius: 1rem;
     margin-bottom: 2rem;
-    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 10px 40px rgba(99, 102, 241, 0.3);
+    border: 1px solid rgba(139, 92, 246, 0.2);
 }
 
 .hero-title {
@@ -29,7 +30,7 @@
     color: white;
     text-align: center;
     margin-bottom: 0.5rem;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .hero-subtitle {
@@ -50,26 +51,26 @@
     font-size: 1.1rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .badge-real {
-    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
     color: white;
 }
 
 .badge-fake {
-    background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+    background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
     color: white;
 }
 
-/* ---------- Card Styling ---------- */
+/* ---------- Dark Card Styling ---------- */
 .card {
-    background: white;
+    background: #1e293b;
     padding: 1.5rem;
     border-radius: 0.75rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    border: 1px solid #e0e7ef;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    border: 1px solid #334155;
     min-height: 400px;
 }
 
@@ -77,182 +78,205 @@
     font-size: 1.3rem;
     margin-bottom: 1.5rem;
     padding: 1rem;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    background: linear-gradient(135deg, #334155 0%, #475569 100%);
     border-radius: 0.5rem;
     text-align: center;
+    color: #e2e8f0;
+    border: 1px solid #475569;
 }
 
-/* ---------- Metrics ---------- */
+/* ---------- Dark Metrics ---------- */
 [data-testid="stMetricValue"] {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #2d3748;
+    color: #f1f5f9 !important;
 }
 
 [data-testid="stMetricLabel"] {
     font-size: 0.9rem;
     font-weight: 500;
-    color: #718096;
+    color: #94a3b8 !important;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 /* ---------- Progress Bar ---------- */
-.stProgress > div > div {
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-    border-radius: 1rem;
+.stProgress > div > div > div {
+    background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%) !important;
 }
 
-/* ---------- Buttons ---------- */
+/* ---------- Dark Buttons ---------- */
 .stButton > button {
     border-radius: 0.5rem;
     font-weight: 600;
     padding: 0.6rem 1.2rem;
     transition: all 0.3s ease;
-    border: none;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #475569;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    background: #334155;
+    color: #e2e8f0;
 }
 
 .stButton > button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+    background: #475569;
+    border-color: #6366f1;
 }
 
 .stButton > button[kind="primary"] {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
     color: white;
+    border: none;
 }
 
 .stButton > button[kind="primary"]:hover {
-    background: linear-gradient(135deg, #5568d3 0%, #653a8b 100%);
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
 }
 
-/* ---------- Input Fields ---------- */
+/* ---------- Dark Input Fields ---------- */
 .stTextArea textarea {
     border-radius: 0.5rem;
-    border: 2px solid #e0e7ef;
+    border: 2px solid #475569;
     padding: 0.75rem;
     font-size: 1rem;
-    transition: border-color 0.3s ease;
+    background: #1e293b;
+    color: #e2e8f0;
 }
 
 .stTextArea textarea:focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
 }
 
-.stNumberInput input,
-.stSlider {
+.stTextArea textarea::placeholder {
+    color: #64748b;
+}
+
+.stNumberInput input {
+    background: #1e293b;
+    color: #e2e8f0;
+    border: 2px solid #475569;
     border-radius: 0.5rem;
 }
 
-/* ---------- Tabs ---------- */
+.stNumberInput input:focus {
+    border-color: #6366f1;
+}
+
+.stSlider > div > div > div {
+    background: #475569;
+}
+
+/* ---------- Dark Tabs ---------- */
 .stTabs [data-baseweb="tab-list"] {
     gap: 1rem;
-    background: white;
+    background: #1e293b;
     padding: 0.5rem;
     border-radius: 0.75rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+    border: 1px solid #334155;
 }
 
 .stTabs [data-baseweb="tab"] {
     border-radius: 0.5rem;
     font-weight: 600;
     padding: 0.75rem 1.5rem;
-    color: #4a5568;
-    transition: all 0.3s ease;
+    color: #94a3b8;
+    background: transparent;
 }
 
 .stTabs [data-baseweb="tab"]:hover {
-    background-color: #f7fafc;
-    color: #667eea;
+    background: #334155;
+    color: #e2e8f0;
 }
 
 .stTabs [aria-selected="true"] {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
     color: white !important;
 }
 
-/* ---------- Sidebar ---------- */
+/* ---------- Dark Sidebar ---------- */
 [data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
 }
 
-[data-testid="stSidebar"] .element-container {
-    margin-bottom: 1rem;
+[data-testid="stSidebar"] > div:first-child {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
 }
 
-/* ---------- DataFrame ---------- */
+/* ---------- Light Text on Dark Background ---------- */
+.element-container {
+    color: #e2e8f0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: #f1f5f9 !important;
+}
+
+p, span, div, label {
+    color: #cbd5e1;
+}
+
+.stMarkdown {
+    color: #cbd5e1;
+}
+
+/* ---------- Dark DataFrame ---------- */
 .stDataFrame {
     border-radius: 0.75rem;
     overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
-/* ---------- Alerts ---------- */
-.stAlert {
-    border-radius: 0.5rem;
-    border-left: 4px solid;
-    padding: 1rem;
-    margin: 1rem 0;
+.stDataFrame [data-testid="stDataFrameResizable"] {
+    background: #1e293b;
+    color: #e2e8f0;
 }
 
-.stSuccess {
-    background-color: #d4edda;
-    border-color: #28a745;
-    color: #155724;
-}
-
-.stWarning {
-    background-color: #fff3cd;
-    border-color: #ffc107;
-    color: #856404;
-}
-
-.stError {
-    background-color: #f8d7da;
-    border-color: #dc3545;
-    color: #721c24;
-}
-
-.stInfo {
-    background-color: #d1ecf1;
-    border-color: #17a2b8;
-    color: #0c5460;
-}
-
-/* ---------- Expander ---------- */
-.streamlit-expanderHeader {
-    font-weight: 600;
-    color: #2d3748;
-    border-radius: 0.5rem;
-    background-color: #f7fafc;
-}
-
-.streamlit-expanderHeader:hover {
-    background-color: #edf2f7;
-}
-
-/* ---------- Divider ---------- */
+/* ---------- Dark Divider ---------- */
 hr {
     margin: 1.5rem 0;
     border: none;
-    border-top: 2px solid #e0e7ef;
+    border-top: 2px solid #334155;
 }
 
-/* ---------- Responsive Design ---------- */
-@media (max-width: 768px) {
-    .hero-title {
-        font-size: 2rem;
-    }
-    
-    .hero-subtitle {
-        font-size: 1rem;
-    }
-    
-    .card {
-        min-height: auto;
-    }
+/* ---------- Download Button ---------- */
+.stDownloadButton > button {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: white;
+    border: none;
+}
+
+/* ---------- Dark Selectbox ---------- */
+.stSelectbox > div > div {
+    background: #1e293b;
+    color: #e2e8f0;
+    border: 2px solid #475569;
+}
+
+/* ---------- Caption Text ---------- */
+.stCaptionContainer {
+    color: #94a3b8 !important;
+}
+
+/* ---------- Code Blocks ---------- */
+code {
+    background: #0f172a;
+    color: #f1f5f9;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+}
+
+/* ---------- Dark Expander ---------- */
+.streamlit-expanderHeader {
+    background: #334155;
+    color: #e2e8f0;
+    border-radius: 0.5rem;
+}
+
+.streamlit-expanderHeader:hover {
+    background: #475569;
 }
 
 /* ---------- Animations ---------- */
@@ -278,15 +302,30 @@ hr {
 }
 
 ::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: #1e293b;
     border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
     border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, #5568d3 0%, #653a8b 100%);
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+}
+
+/* ---------- Responsive Design ---------- */
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1rem;
+    }
+    
+    .card {
+        min-height: auto;
+    }
 }
